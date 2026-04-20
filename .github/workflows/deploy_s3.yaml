@@ -1,0 +1,68 @@
+name: Deploy Frontend Infra + UI
+
+
+on:
+  push:
+    branches:
+     # - users/patrick/v2-devops-infra
+      - main  
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{secrets.AWS_REGION}}
+
+
+      - name: Deploy CloudFormation
+        run: |
+          aws cloudformation deploy \
+            --template-file CFT/s3_bucket.yaml \
+            --stack-name keydemand_admin_ui_poc \
+            --capabilities CAPABILITY_NAMED_IAM
+
+
+      - name: Get CloudFront Distribution ID
+        id: keydemand_admin_ui_poc
+        run: |
+          DIST_ID=$(aws cloudformation describe-stacks \
+            --stack-name keydemand_admin_ui_poc \
+            --query "Stacks[0].Outputs[?OutputKey=='DistributionId'].OutputValue" \
+            --output text)
+          echo "dist_id=$DIST_ID" >> $GITHUB_OUTPUT
+
+
+      # - name: Setup Node.js
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: 20.19
+
+
+      # - name: Install & Build
+      #   run: |
+      #     cd apps/end-user-ui
+      #     npm ci
+      #     npm run build
+
+
+      # - name: Sync to S3
+      #   run: |
+      #     aws s3 sync s3://keydemand_admin_ui_poc --delete
+
+
+      - name: Invalidate CloudFront
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ steps.keydemand_admin_ui_poc.outputs.dist_id }} \
+            --paths "/*"
