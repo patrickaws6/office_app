@@ -29,15 +29,15 @@ jobs:
         run: |
           aws cloudformation deploy \
             --template-file CFT/s3_bucket.yaml \
-            --stack-name keydemand_admin_ui_poc \
+            --stack-name keydemand-admin-ui-poc \
             --capabilities CAPABILITY_NAMED_IAM
 
 
       - name: Get CloudFront Distribution ID
-        id: keydemand_admin_ui_poc
+        id: keydemand-admin-ui-poc
         run: |
           DIST_ID=$(aws cloudformation describe-stacks \
-            --stack-name keydemand_admin_ui_poc \
+            --stack-name keydemand-admin-ui-poc \
             --query "Stacks[0].Outputs[?OutputKey=='DistributionId'].OutputValue" \
             --output text)
           echo "dist_id=$DIST_ID" >> $GITHUB_OUTPUT
@@ -64,5 +64,5 @@ jobs:
       - name: Invalidate CloudFront
         run: |
           aws cloudfront create-invalidation \
-            --distribution-id ${{ steps.keydemand_admin_ui_poc.outputs.dist_id }} \
+            --distribution-id ${{ steps.keydemand-admin-ui-poc.outputs.dist_id }} \
             --paths "/*"

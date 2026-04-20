@@ -6,7 +6,7 @@ Resources:
   FrontendBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: keydemand_admin_ui_poc
+      BucketName: keydemand-admin-ui-poc
       VersioningConfiguration:
         Status: Enabled
       PublicAccessBlockConfiguration:
